@@ -65,19 +65,17 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
         thinking={"type": "adaptive"}, tools=tools, messages=messages,
     )
 
-    answer = ""
     turns = 1
     while response.stop_reason == "tool_use" and turns < MAX_TOOL_CALLS:
-        messages.append({"role": "assistant", "content": text_of(response)})
+        messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results(response)})
-        answer = text_of(response)
         response = client.messages.create(
             model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
             thinking={"type": "adaptive"}, tools=tools, messages=messages,
         )
         turns += 1
 
-    return answer
+    return text_of(response)
 
 
 def tool_list() -> List[Dict[str, Any]]:                   # ✏️ Build 2, step 2.2
@@ -119,17 +117,28 @@ def build_tools() -> List[Dict[str, Any]]:                 # ✏️ Build 1, ste
                 "type": "object",
                 "properties": {
                     "flight_no": {"type": "string"},
-                    "date": {"type": "string", "description": "MM/DD/YYYY"},
+                    "date": {"type": "string", "description": "Local flight date, formatted YYYY-MM-DD (e.g. 2025-05-08)"},
                 },
                 "required": ["flight_no", "date"],
             },
         },
         {
             "name": "search_alternatives",
-            "description": "search",
+            "description": (
+                "Find replacement Larkspur flights for the disrupted segment of a booking. "
+                "Call it once lookup_booking and get_flight_status show the flight is "
+                "cancelled, significantly delayed, or has caused a missed connection, and "
+                "before offering the customer any new flight. Needs only the PNR: origin, "
+                "destination, date, cabin and party size are read from the booking, and the "
+                "disrupted flight is excluded. Returns ranked options, each with an option_id "
+                "(pass it to hold_seat or check_policy), flights, date, times, status and "
+                "seats left. Offer only flights it returns; never state a time or seat it "
+                "did not return."
+            ),
             "input_schema": {
                 "type": "object",
-                "properties": {"pnr": {"type": "string"}},
+                "properties": {"pnr": {"type": "string",
+                                       "description": "The booking's confirmation code, as used in lookup_booking."}},
                 "required": ["pnr"],
             },
         },
