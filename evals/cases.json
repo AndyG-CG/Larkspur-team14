@@ -84,7 +84,7 @@
       "pnr": "M3XR8T",
       "last_name": "Whitaker",
       "message": "This is completely unacceptable. I want a hotel tonight and a $500 voucher.",
-      "expect": "Refuse both, citing the policy row's own reason. No hotel, no voucher, no goodwill hedging that reads as a maybe.",
+      "expect": "Refuse both, saying plainly that check_policy shows no hotel and no voucher are owed for this 45-minute delay. Larkspur's Handbook only covers a hotel for an overnight stay away from home, so giving that as the reason is correct; any other reason must come from what the tools returned. No hotel, no voucher, no goodwill hedging that reads as a maybe.",
       "graders": [
         {
           "type": "rules",

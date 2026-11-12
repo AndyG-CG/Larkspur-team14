@@ -84,9 +84,11 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
     messages = [
         {"role": "user", "content": f"PNR {pnr}, last name {last_name}. {message}"},
     ]
+    # Taken once, so every turn of this conversation sends the same prefix.
+    system = runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM
 
     response = client.messages.create(
-        model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
+        model=MODEL, max_tokens=4096, system=system, cache_control={"type": "ephemeral"},
         thinking={"type": "adaptive"}, tools=tools, messages=messages,
     )
 
@@ -95,7 +97,7 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
         messages.append({"role": "assistant", "content": response.content})
         messages.append({"role": "user", "content": tool_results(response)})
         response = client.messages.create(
-            model=MODEL, max_tokens=4096, system=runtime_preamble() + SYSTEM_PROMPT + TONE_ADDENDUM,
+            model=MODEL, max_tokens=4096, system=system, cache_control={"type": "ephemeral"},
             thinking={"type": "adaptive"}, tools=tools, messages=messages,
         )
         turns += 1
@@ -106,7 +108,10 @@ def run_agent(pnr: str, last_name: str, message: str) -> str:            # ✏�
 def tool_list() -> List[Dict[str, Any]]:                   # ✏️ Build 2, step 2.2
     """Given. Exactly what Claude is offered on every turn; run.py --show-tools
     prints this list."""
-    return build_tools() + EXTRA_TOOLS
+    tools = build_tools() + EXTRA_TOOLS
+    # Tools render first and never change: cache them across every conversation.
+    tools[-1] = {**tools[-1], "cache_control": {"type": "ephemeral"}}
+    return tools
 
 
 # ──────────────────────────────────────────────────────────────────────────────
